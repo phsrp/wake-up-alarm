@@ -1,0 +1,58 @@
+<div align="center">
+
+# Wake Up
+
+An Android alarm app for people who sleep through their alarms.
+It rings until you solve math problems, and there is no snooze.  
+**Every line of it was written by AI.**
+
+![Made with AI](https://img.shields.io/badge/made%20with-AI-ebbcba?style=for-the-badge) ![Android](https://img.shields.io/badge/platform-Android-31748f?style=for-the-badge) ![Vibe coded](https://img.shields.io/badge/vibe-coded-c4a7e7?style=for-the-badge)
+
+</div>
+
+## Vibe coded
+
+This app was designed, written and built by Claude (Anthropic) from plain-English instructions. It was made for one phone (a OnePlus running OxygenOS) and tested there, so it may behave differently on other devices.
+
+## What it does
+
+- **Alarms** with a time, repeat days, a label and a sound picked from your phone's ringtones and audio.
+- **Folders** to group alarms (for example "School" or "Project work"), with one switch to turn a whole folder on or off.
+- **Hard to ignore:** it rings on the alarm volume at maximum, vibrates, turns the screen on and shows over the lock screen. It rings until you stop it, or for a set time if you choose that.
+- **No snooze:** the only way to stop it is to solve math problems in a row. A wrong answer starts the count again. Difficulty is easy, medium or hard.
+- **Survives restarts:** alarms are set again after a reboot, an app update, or a time or timezone change.
+- **Setup guide** on first launch for permissions and the battery settings OnePlus phones need, and a **Test alarm in 10 seconds** button.
+
+## Previews
+
+<!--
+Add screenshots to docs/screenshots/ and uncomment this block:
+
+<div align="center">
+
+<img src="docs/screenshots/alarms.png" alt="The alarm list with folders" width="30%"> <img src="docs/screenshots/ringing.png" alt="The ringing screen with a math problem" width="30%"> <img src="docs/screenshots/setup.png" alt="The setup guide" width="30%">
+
+</div>
+-->
+
+*Screenshots coming soon.*
+
+## How to install
+
+1. Open the **Actions** tab of this repository and click the latest run with a green tick.
+2. At the bottom, under **Artifacts**, click `wakeup-debug-apk`. It downloads as a zip.
+3. Unzip it and open the `.apk` file on your phone. If Android asks, allow your browser or file manager to **install unknown apps**.
+4. Open Wake Up and follow the setup guide.
+
+To update, download the newest build the same way and install it over the old one. Your alarms are kept.
+
+> **Never use Force stop** on the app in Android settings. It cancels every alarm until you open the app again.
+
+## Built with
+
+- [Kotlin](https://kotlinlang.org/) and [Jetpack Compose](https://developer.android.com/compose)
+- [Material 3 Expressive](https://m3.material.io/blog/building-with-m3-expressive) through [Compose Material 3](https://developer.android.com/jetpack/androidx/releases/compose-material3) 1.5 (Apache-2.0)
+- [Room](https://developer.android.com/training/data-storage/room) for storing alarms and folders (Apache-2.0)
+- [AlarmManager `setAlarmClock`](https://developer.android.com/reference/android/app/AlarmManager#setAlarmClock(android.app.AlarmManager.AlarmClockInfo,%20android.app.PendingIntent)) for exact alarms that work in Doze
+- [KSP](https://github.com/google/ksp) for Room's code generation (Apache-2.0)
+- [GitHub Actions](https://docs.github.com/actions) to build the APK
