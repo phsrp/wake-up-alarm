@@ -125,13 +125,11 @@ fun StopwatchScreen(bottomBar: @Composable () -> Unit) {
             ) {
                 OutlinedButton(
                     onClick = {
-                        prefs.stopwatchRunning = false
-                        prefs.stopwatchAccumulated = 0
-                        prefs.stopwatchStartedAt = 0
-                        prefs.stopwatchLaps = emptyList()
+                        LiveUpdates.resetStopwatch(context)
                         running = false
                         laps = emptyList()
-                        LiveUpdates.syncStopwatch(context)
+                        // Changing `now` is what makes the screen redraw while the stopwatch is paused.
+                        now = System.currentTimeMillis()
                     },
                     enabled = elapsed > 0 || running,
                     modifier = Modifier
@@ -142,17 +140,9 @@ fun StopwatchScreen(bottomBar: @Composable () -> Unit) {
 
                 Button(
                     onClick = {
-                        val moment = System.currentTimeMillis()
-                        if (running) {
-                            prefs.stopwatchAccumulated = prefs.stopwatchElapsed(moment)
-                            prefs.stopwatchRunning = false
-                            running = false
-                        } else {
-                            prefs.stopwatchStartedAt = moment
-                            prefs.stopwatchRunning = true
-                            running = true
-                        }
-                        LiveUpdates.syncStopwatch(context)
+                        LiveUpdates.toggleStopwatch(context)
+                        running = prefs.stopwatchRunning
+                        now = System.currentTimeMillis()
                     },
                     modifier = Modifier
                         .weight(1.4f)
@@ -168,8 +158,8 @@ fun StopwatchScreen(bottomBar: @Composable () -> Unit) {
 
                 FilledTonalButton(
                     onClick = {
-                        laps = laps + prefs.stopwatchElapsed()
-                        prefs.stopwatchLaps = laps
+                        LiveUpdates.lapStopwatch(context)
+                        laps = prefs.stopwatchLaps
                     },
                     enabled = running,
                     modifier = Modifier

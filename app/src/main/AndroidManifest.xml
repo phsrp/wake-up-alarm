@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -85,6 +86,27 @@
             android:showWhenLocked="true"
             android:taskAffinity=""
             android:turnScreenOn="true" />
+
+        <!-- The popup opened by tapping a running timer or stopwatch notification. -->
+        <activity
+            android:name=".ui.LivePopupActivity"
+            android:directBootAware="true"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/Theme.WakeUp.Popup" />
+
+        <!-- Refreshes the running timer and stopwatch notifications once a second. -->
+        <service
+            android:name=".live.LiveTickerService"
+            android:directBootAware="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Live countdown for running timers and the stopwatch" />
+        </service>
 
         <service
             android:name=".ring.AlarmService"

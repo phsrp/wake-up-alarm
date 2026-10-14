@@ -68,7 +68,7 @@ object Timers {
         val endAt = System.currentTimeMillis() + left
         dao(context).updateTimer(timer.copy(state = TimerEntity.STATE_RUNNING, endAtMillis = endAt, remainingMillis = left))
         scheduleAt(context, id, endAt)
-        LiveUpdates.syncTimers(context)
+        LiveUpdates.sync(context)
     }
 
     suspend fun pause(context: Context, id: Long) {
@@ -77,7 +77,27 @@ object Timers {
         val left = (timer.endAtMillis - System.currentTimeMillis()).coerceAtLeast(0)
         cancelSchedule(context, id)
         dao(context).updateTimer(timer.copy(state = TimerEntity.STATE_PAUSED, remainingMillis = left))
-        LiveUpdates.syncTimers(context)
+        LiveUpdates.sync(context)
+    }
+
+    /** Adds a minute to a running or paused timer. */
+    suspend fun addMinute(context: Context, id: Long) {
+        val timer = dao(context).getTimer(id) ?: return
+        val extended = timer.durationSeconds + 60
+        when (timer.state) {
+            TimerEntity.STATE_RUNNING -> {
+                val endAt = timer.endAtMillis + 60_000
+                dao(context).updateTimer(timer.copy(durationSeconds = extended, endAtMillis = endAt))
+                scheduleAt(context, id, endAt)
+            }
+
+            TimerEntity.STATE_PAUSED -> dao(context).updateTimer(
+                timer.copy(durationSeconds = extended, remainingMillis = timer.remainingMillis + 60_000),
+            )
+
+            else -> return
+        }
+        LiveUpdates.sync(context)
     }
 
     suspend fun reset(context: Context, id: Long) {
@@ -86,7 +106,7 @@ object Timers {
         dao(context).updateTimer(
             timer.copy(state = TimerEntity.STATE_IDLE, endAtMillis = 0, remainingMillis = timer.durationSeconds * 1000L),
         )
-        LiveUpdates.syncTimers(context)
+        LiveUpdates.sync(context)
     }
 
     suspend fun delete(context: Context, ids: List<Long>) {
@@ -95,13 +115,14 @@ object Timers {
             LiveUpdates.cancelTimer(context, it)
         }
         dao(context).deleteTimers(ids)
+        LiveUpdates.sync(context)
     }
 
     /** The time ran out: remember that, then ring. */
     suspend fun onFired(context: Context, id: Long) {
         val timer = dao(context).getTimer(id) ?: return
         dao(context).updateTimer(timer.copy(state = TimerEntity.STATE_FINISHED, endAtMillis = 0, remainingMillis = 0))
-        LiveUpdates.syncTimers(context)
+        LiveUpdates.sync(context)
     }
 
     /** After a reboot or update: put running timers back, and ring any that ran out while the phone was off. */
@@ -116,7 +137,6 @@ object Timers {
                 scheduleAt(context, timer.id, timer.endAtMillis)
             }
         }
-        LiveUpdates.syncTimers(context)
-        LiveUpdates.syncStopwatch(context)
+        LiveUpdates.sync(context)
     }
 }

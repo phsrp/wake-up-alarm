@@ -50,6 +50,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -326,13 +327,13 @@ private fun LazyItemScope.TimerCard(
 
 @Composable
 private fun NewTimerDialog(onCreate: (Int, String) -> Unit, onDismiss: () -> Unit) {
-    var hours by remember { mutableStateOf("") }
-    var minutes by remember { mutableStateOf("") }
-    var seconds by remember { mutableStateOf("") }
+    // The wheels and the boxes edit the same three numbers, so either one can be used.
+    var hours by remember { mutableIntStateOf(0) }
+    var minutes by remember { mutableIntStateOf(0) }
+    var seconds by remember { mutableIntStateOf(0) }
     var label by remember { mutableStateOf("") }
 
-    fun part(text: String) = text.toIntOrNull() ?: 0
-    val total = part(hours) * 3600 + part(minutes) * 60 + part(seconds)
+    val total = hours * 3600 + minutes * 60 + seconds
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -340,9 +341,14 @@ private fun NewTimerDialog(onCreate: (Int, String) -> Unit, onDismiss: () -> Uni
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TimeField("h", hours, Modifier.weight(1f)) { hours = it }
-                    TimeField("min", minutes, Modifier.weight(1f)) { minutes = it }
-                    TimeField("sec", seconds, Modifier.weight(1f)) { seconds = it }
+                    WheelPicker(hours, 24, "hours", Modifier.weight(1f)) { hours = it }
+                    WheelPicker(minutes, 60, "min", Modifier.weight(1f)) { minutes = it }
+                    WheelPicker(seconds, 60, "sec", Modifier.weight(1f)) { seconds = it }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TimeField("h", hours, 23, Modifier.weight(1f)) { hours = it }
+                    TimeField("min", minutes, 59, Modifier.weight(1f)) { minutes = it }
+                    TimeField("sec", seconds, 59, Modifier.weight(1f)) { seconds = it }
                 }
                 OutlinedTextField(
                     value = label,
@@ -361,10 +367,13 @@ private fun NewTimerDialog(onCreate: (Int, String) -> Unit, onDismiss: () -> Uni
 }
 
 @Composable
-private fun TimeField(label: String, value: String, modifier: Modifier, onChange: (String) -> Unit) {
+private fun TimeField(label: String, value: Int, max: Int, modifier: Modifier, onChange: (Int) -> Unit) {
     OutlinedTextField(
-        value = value,
-        onValueChange = { text -> onChange(text.filter { it.isDigit() }.take(2)) },
+        value = if (value == 0) "" else value.toString(),
+        onValueChange = { text ->
+            val number = text.filter { it.isDigit() }.take(2).toIntOrNull() ?: 0
+            onChange(number.coerceAtMost(max))
+        },
         modifier = modifier,
         singleLine = true,
         label = { Text(label) },

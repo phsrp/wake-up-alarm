@@ -3,4 +3,11 @@
     <style name="Theme.WakeUp" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@android:color/white</item>
     </style>
+
+    <!-- See-through window so the popup floats over whatever was on screen. -->
+    <style name="Theme.WakeUp.Popup" parent="Theme.WakeUp">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
 </resources>
