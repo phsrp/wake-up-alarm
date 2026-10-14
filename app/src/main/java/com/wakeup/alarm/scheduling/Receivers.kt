@@ -17,7 +17,13 @@ class AlarmReceiver : BroadcastReceiver() {
         val alarmId = intent.getLongExtra(AlarmScheduler.EXTRA_ALARM_ID, NO_ALARM)
         if (alarmId == NO_ALARM) return
 
-        AlarmService.start(context, alarmId)
+        AlarmService.start(
+            context,
+            alarmId,
+            soundUri = intent.getStringExtra(AlarmScheduler.EXTRA_SOUND_URI),
+            durationMinutes = intent.getIntExtra(AlarmScheduler.EXTRA_DURATION_MINUTES, 0),
+            label = intent.getStringExtra(AlarmScheduler.EXTRA_LABEL),
+        )
 
         if (intent.action != AlarmScheduler.ACTION_RING) return
         val pending = goAsync()

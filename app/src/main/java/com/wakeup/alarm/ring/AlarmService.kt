@@ -55,6 +55,11 @@ class AlarmService : Service() {
     private var stopAtElapsed = 0L // 0 means ring until dismissed
     private var lastLaunch = 0L
 
+    // Only used for test rings, which carry their own settings instead of reading a saved alarm.
+    private var testSoundUri: String? = null
+    private var testDurationMinutes = 0
+    private var testLabel: String? = null
+
     private val audioAttributes = AudioAttributes.Builder()
         .setUsage(AudioAttributes.USAGE_ALARM)
         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -93,6 +98,12 @@ class AlarmService : Service() {
         // A null intent means Android restarted us after killing the process: resume the saved ring.
         val requested = intent?.getLongExtra(EXTRA_ALARM_ID, NO_ALARM) ?: NO_ALARM
         val alarmId = if (requested != NO_ALARM) requested else prefs.ringingAlarmId
+
+        if (intent != null && !ringing) {
+            testSoundUri = intent.getStringExtra(EXTRA_SOUND_URI)
+            testDurationMinutes = intent.getIntExtra(EXTRA_DURATION_MINUTES, 0)
+            testLabel = intent.getStringExtra(EXTRA_LABEL)
+        }
 
         // startForegroundService() promises a notification within seconds, so always post one first.
         enterForeground(prefs.ringingLabel)
@@ -143,15 +154,16 @@ class AlarmService : Service() {
                 null
             }
 
-            val label = if (alarmId == TEST_ALARM_ID) "Test alarm" else alarm?.label.orEmpty()
+            val isTest = alarmId == TEST_ALARM_ID
+            val label = if (isTest) testLabel?.ifBlank { null } ?: "Test alarm" else alarm?.label.orEmpty()
             prefs.ringingLabel = label
             getSystemService(NotificationManager::class.java)
                 .notify(AlarmNotifications.NOTIFICATION_ID, AlarmNotifications.build(this@AlarmService, label))
 
-            val minutes = alarm?.durationMinutes ?: 0
+            val minutes = if (isTest) testDurationMinutes else alarm?.durationMinutes ?: 0
             if (minutes > 0) stopAtElapsed = SystemClock.elapsedRealtime() + minutes * 60_000L
 
-            startSound(alarm?.soundUri)
+            startSound(if (isTest) testSoundUri else alarm?.soundUri)
         }
     }
 
@@ -284,11 +296,24 @@ class AlarmService : Service() {
         private const val TAG = "AlarmService"
         private const val ACTION_STOP = "com.wakeup.alarm.STOP_RINGING"
         private const val EXTRA_ALARM_ID = "alarm_id"
+        private const val EXTRA_SOUND_URI = "sound_uri"
+        private const val EXTRA_DURATION_MINUTES = "duration_minutes"
+        private const val EXTRA_LABEL = "label"
         private const val RELAUNCH_INTERVAL_MS = 2_500L
         private const val WAKE_LOCK_TIMEOUT_MS = 6 * 60 * 60 * 1000L
 
-        fun start(context: Context, alarmId: Long) {
-            val intent = Intent(context, AlarmService::class.java).putExtra(EXTRA_ALARM_ID, alarmId)
+        fun start(
+            context: Context,
+            alarmId: Long,
+            soundUri: String? = null,
+            durationMinutes: Int = 0,
+            label: String? = null,
+        ) {
+            val intent = Intent(context, AlarmService::class.java)
+                .putExtra(EXTRA_ALARM_ID, alarmId)
+                .putExtra(EXTRA_SOUND_URI, soundUri)
+                .putExtra(EXTRA_DURATION_MINUTES, durationMinutes)
+                .putExtra(EXTRA_LABEL, label)
             try {
                 ContextCompat.startForegroundService(context, intent)
             } catch (e: Exception) {

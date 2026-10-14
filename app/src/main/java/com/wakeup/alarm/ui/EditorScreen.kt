@@ -8,6 +8,7 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
 import android.text.format.DateFormat
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.horizontalScroll
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentCompat
 import com.wakeup.alarm.data.AlarmEntity
 import com.wakeup.alarm.data.FolderEntity
+import com.wakeup.alarm.scheduling.AlarmScheduler
 
 private val DAY_LETTERS = listOf("M", "T", "W", "T", "F", "S", "S")
 private val DURATIONS = listOf(0 to "Until dismissed", 1 to "1 min", 5 to "5 min", 10 to "10 min", 30 to "30 min")
@@ -214,6 +216,28 @@ fun EditorScreen(
                         )
                     }
                 }
+            }
+
+            OutlinedButton(
+                onClick = {
+                    AlarmScheduler.scheduleTest(
+                        context,
+                        soundUri = soundUri,
+                        durationMinutes = duration,
+                        label = label.trim(),
+                    )
+                    Toast.makeText(
+                        context,
+                        "Rings in 10 seconds with this sound. Lock your phone to test the lock screen too.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+            ) {
+                Text("Test this alarm in 10 seconds", style = MaterialTheme.typography.titleMedium)
             }
 
             Button(

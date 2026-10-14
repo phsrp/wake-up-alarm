@@ -34,16 +34,26 @@ object AlarmScheduler {
     const val ACTION_RING = "com.wakeup.alarm.RING"
     const val ACTION_RESTART_RING = "com.wakeup.alarm.RESTART_RING"
     const val EXTRA_ALARM_ID = "alarm_id"
+    const val EXTRA_SOUND_URI = "sound_uri"
+    const val EXTRA_DURATION_MINUTES = "duration_minutes"
+    const val EXTRA_LABEL = "label"
 
     private const val TAG = "AlarmScheduler"
     private const val RESTART_REQUEST_OFFSET = 1_000_000
 
     private fun alarmManager(context: Context) = context.getSystemService(AlarmManager::class.java)
 
-    private fun ringPending(context: Context, id: Long, action: String, requestCode: Int): PendingIntent {
+    private fun ringPending(
+        context: Context,
+        id: Long,
+        action: String,
+        requestCode: Int,
+        configure: Intent.() -> Unit = {},
+    ): PendingIntent {
         val intent = Intent(context, AlarmReceiver::class.java)
             .setAction(action)
             .putExtra(EXTRA_ALARM_ID, id)
+            .apply(configure)
         return PendingIntent.getBroadcast(
             context,
             requestCode,
@@ -74,9 +84,24 @@ object AlarmScheduler {
         alarmManager(context).cancel(pending)
     }
 
-    fun scheduleTest(context: Context, delayMillis: Long = 10_000) {
+    /**
+     * Rings in [delayMillis] without touching any saved alarm. The sound, duration and label are
+     * carried in the request itself, so the editor can test exactly what is on screen.
+     */
+    fun scheduleTest(
+        context: Context,
+        soundUri: String? = null,
+        durationMinutes: Int = 0,
+        label: String = "",
+        delayMillis: Long = 10_000,
+    ) {
         val at = System.currentTimeMillis() + delayMillis
-        setClock(context, at, ringPending(context, TEST_ALARM_ID, ACTION_RING, TEST_ALARM_ID.toInt()))
+        val pending = ringPending(context, TEST_ALARM_ID, ACTION_RING, TEST_ALARM_ID.toInt()) {
+            putExtra(EXTRA_SOUND_URI, soundUri)
+            putExtra(EXTRA_DURATION_MINUTES, durationMinutes)
+            putExtra(EXTRA_LABEL, label)
+        }
+        setClock(context, at, pending)
     }
 
     /** A safety net used when the ringing service is swiped away: brings the ringing back within a second. */
