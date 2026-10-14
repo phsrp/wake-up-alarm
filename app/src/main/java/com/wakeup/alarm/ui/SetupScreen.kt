@@ -282,7 +282,9 @@ private fun OnePlusCard(context: Context) {
                 "1. Open Wake Up's app settings, then Battery (or Battery usage). Choose Unrestricted / Allow background activity.\n" +
                     "2. In the same area, turn on Allow auto launch (sometimes called Auto-start).\n" +
                     "3. Open the Recents screen, then lock Wake Up (tap the app's menu or long-press its card and choose Lock).\n" +
-                    "4. Never use Force stop on Wake Up. That cancels every alarm until you open the app again.",
+                    "4. Never use Force stop on Wake Up. That cancels every alarm until you open the app again.\n" +
+                    "5. To see timers and the stopwatch in the Live Alerts capsule, open Live Updates settings and turn on " +
+                    "Show Live Updates on Live Alerts for Wake Up.",
                 style = MaterialTheme.typography.bodyMedium,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -308,6 +310,18 @@ private fun OnePlusCard(context: Context) {
                     shape = MaterialTheme.shapes.large,
                 ) { Text("Auto launch") }
             }
+            FilledTonalButton(
+                onClick = {
+                    val packageUri = Uri.parse("package:${context.packageName}")
+                    context.openFirstThatWorks(
+                        Intent(Settings.ACTION_MANAGE_APP_PROMOTED_NOTIFICATIONS, packageUri),
+                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
+                        context.appDetailsIntent(),
+                    )
+                },
+                shape = MaterialTheme.shapes.large,
+            ) { Text("Live Updates settings") }
         }
     }
 }

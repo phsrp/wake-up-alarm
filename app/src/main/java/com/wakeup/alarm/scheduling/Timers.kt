@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.SystemClock
 import com.wakeup.alarm.data.AppDatabase
 import com.wakeup.alarm.data.TimerEntity
+import com.wakeup.alarm.live.LiveUpdates
 import com.wakeup.alarm.ring.TimerService
 
 /** All timer behaviour in one place, so the screen, Google's set-timer request and the boot receiver agree. */
@@ -67,6 +68,7 @@ object Timers {
         val endAt = System.currentTimeMillis() + left
         dao(context).updateTimer(timer.copy(state = TimerEntity.STATE_RUNNING, endAtMillis = endAt, remainingMillis = left))
         scheduleAt(context, id, endAt)
+        LiveUpdates.syncTimers(context)
     }
 
     suspend fun pause(context: Context, id: Long) {
@@ -75,6 +77,7 @@ object Timers {
         val left = (timer.endAtMillis - System.currentTimeMillis()).coerceAtLeast(0)
         cancelSchedule(context, id)
         dao(context).updateTimer(timer.copy(state = TimerEntity.STATE_PAUSED, remainingMillis = left))
+        LiveUpdates.syncTimers(context)
     }
 
     suspend fun reset(context: Context, id: Long) {
@@ -83,10 +86,14 @@ object Timers {
         dao(context).updateTimer(
             timer.copy(state = TimerEntity.STATE_IDLE, endAtMillis = 0, remainingMillis = timer.durationSeconds * 1000L),
         )
+        LiveUpdates.syncTimers(context)
     }
 
     suspend fun delete(context: Context, ids: List<Long>) {
-        ids.forEach { cancelSchedule(context, it) }
+        ids.forEach {
+            cancelSchedule(context, it)
+            LiveUpdates.cancelTimer(context, it)
+        }
         dao(context).deleteTimers(ids)
     }
 
@@ -94,6 +101,7 @@ object Timers {
     suspend fun onFired(context: Context, id: Long) {
         val timer = dao(context).getTimer(id) ?: return
         dao(context).updateTimer(timer.copy(state = TimerEntity.STATE_FINISHED, endAtMillis = 0, remainingMillis = 0))
+        LiveUpdates.syncTimers(context)
     }
 
     /** After a reboot or update: put running timers back, and ring any that ran out while the phone was off. */
@@ -108,5 +116,7 @@ object Timers {
                 scheduleAt(context, timer.id, timer.endAtMillis)
             }
         }
+        LiveUpdates.syncTimers(context)
+        LiveUpdates.syncStopwatch(context)
     }
 }

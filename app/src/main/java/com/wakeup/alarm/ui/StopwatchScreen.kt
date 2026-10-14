@@ -36,7 +36,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.wakeup.alarm.AppPrefs
+import com.wakeup.alarm.live.LiveUpdates
 import kotlinx.coroutines.delay
 
 /** 01:23.45, or 1:01:23.45 once it passes an hour. */
@@ -61,6 +66,20 @@ fun StopwatchScreen(bottomBar: @Composable () -> Unit) {
     var running by remember { mutableStateOf(prefs.stopwatchRunning) }
     var laps by remember { mutableStateOf(prefs.stopwatchLaps) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    // The Pause button on the live notification changes the stopwatch while this screen is behind it.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                running = prefs.stopwatchRunning
+                laps = prefs.stopwatchLaps
+                now = System.currentTimeMillis()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(running) {
         while (running) {
@@ -112,6 +131,7 @@ fun StopwatchScreen(bottomBar: @Composable () -> Unit) {
                         prefs.stopwatchLaps = emptyList()
                         running = false
                         laps = emptyList()
+                        LiveUpdates.syncStopwatch(context)
                     },
                     enabled = elapsed > 0 || running,
                     modifier = Modifier
@@ -132,6 +152,7 @@ fun StopwatchScreen(bottomBar: @Composable () -> Unit) {
                             prefs.stopwatchRunning = true
                             running = true
                         }
+                        LiveUpdates.syncStopwatch(context)
                     },
                     modifier = Modifier
                         .weight(1.4f)
