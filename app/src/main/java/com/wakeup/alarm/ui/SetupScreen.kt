@@ -314,7 +314,8 @@ private fun OnePlusCard(context: Context) {
                 onClick = {
                     val packageUri = Uri.parse("package:${context.packageName}")
                     context.openFirstThatWorks(
-                        Intent(Settings.ACTION_MANAGE_APP_PROMOTED_NOTIFICATIONS, packageUri),
+                        // Android 16's page for promoting an app's notifications; skipped if this phone lacks it.
+                        Intent("android.settings.APP_NOTIFICATION_PROMOTION_SETTINGS", packageUri),
                         Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                             .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
                         context.appDetailsIntent(),
