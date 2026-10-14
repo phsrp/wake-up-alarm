@@ -21,7 +21,9 @@ This app was designed, written and built by Claude (Anthropic) from plain-Englis
 - **Hard to ignore:** it rings on the alarm volume at maximum, vibrates, turns the screen on and shows over the lock screen. It rings until you stop it, or for a set time if you choose that.
 - **No snooze:** the only way to stop it is to solve math problems in a row. A wrong answer starts the count again. Difficulty is easy, medium or hard.
 - **Survives restarts:** alarms are set again after a reboot, an app update, or a time or timezone change.
-- **Google can set alarms:** Wake Up answers Android's standard "set an alarm" request. Voice commands can only create alarms, never dismiss them.
+- **Timers and a stopwatch** with laps. Timers keep running when the app is closed and ring when they run out.
+- **Hold to reorder and delete:** press and hold an alarm or timer, then drag it to move it, or let go to select it and delete.
+- **Google can set alarms and timers:** Wake Up answers Android's standard "set an alarm" and "set a timer" requests. Voice commands can only create alarms, never dismiss them.
 - **Setup guide** on first launch for permissions and the battery settings OnePlus phones need, and a **Test alarm in 10 seconds** button.
 
 ## Previews

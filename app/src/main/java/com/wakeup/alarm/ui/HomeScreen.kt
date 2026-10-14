@@ -3,6 +3,7 @@
 package com.wakeup.alarm.ui
 
 import android.text.format.DateFormat
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -18,11 +19,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CreateNewFolder
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
@@ -42,8 +47,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -87,47 +94,113 @@ private sealed interface FolderDialog {
 fun HomeScreen(
     alarms: List<AlarmEntity>,
     folders: List<FolderEntity>,
+    bottomBar: @Composable () -> Unit,
     onToggleAlarm: (Long, Boolean) -> Unit,
     onOpenAlarm: (Long) -> Unit,
     onNewAlarm: () -> Unit,
+    onDeleteAlarms: (List<Long>) -> Unit,
+    onReorderAlarms: (List<Long>) -> Unit,
     onToggleFolder: (Long, Boolean) -> Unit,
     onCreateFolder: (String) -> Unit,
     onRenameFolder: (Long, String) -> Unit,
     onDeleteFolder: (Long) -> Unit,
+    onMoveFolder: (Long, Int) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     var dialog by remember { mutableStateOf<FolderDialog?>(null) }
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val is24Hour = DateFormat.is24HourFormat(LocalContext.current)
-    val byFolder = alarms.groupBy { it.folderId }
+    var selected by remember { mutableStateOf(setOf<Long>()) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    val selecting = selected.isNotEmpty()
+
+    // While an alarm is being dragged, the new order is held here until the database catches up.
+    var localOrder by remember { mutableStateOf<List<Long>?>(null) }
+    LaunchedEffect(alarms) { localOrder = null }
+    val shown = remember(alarms, localOrder) {
+        val order = localOrder
+        if (order == null) {
+            alarms
+        } else {
+            val index = order.withIndex().associate { it.value to it.index }
+            alarms.sortedBy { index[it.id] ?: Int.MAX_VALUE }
+        }
+    }
+    val byFolder = shown.groupBy { it.folderId }
     val ungrouped = byFolder[null].orEmpty()
+    val folderOf = remember(shown) { shown.associate { it.id to it.folderId } }
+
+    val listState = rememberLazyListState()
+    val reorder = rememberReorderState(
+        listState = listState,
+        // Alarms can only be reordered inside their own folder (or among the ungrouped ones).
+        canSwap = { dragged, other -> dragged is Long && other is Long && folderOf[dragged] == folderOf[other] },
+        onMove = { dragged, other ->
+            val order = (localOrder ?: shown.map { it.id }).toMutableList()
+            val from = order.indexOf(dragged as Long)
+            val to = order.indexOf(other as Long)
+            if (from >= 0 && to >= 0) {
+                order[from] = other
+                order[to] = dragged
+                localOrder = order
+            }
+        },
+        onFinished = { localOrder?.let(onReorderAlarms) },
+    )
+
+    BackHandler(enabled = selecting) { selected = emptySet() }
+
+    val is24Hour = DateFormat.is24HourFormat(LocalContext.current)
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
-                title = { Text("Alarms", fontWeight = FontWeight.Black) },
-                actions = {
-                    IconButton(onClick = { dialog = FolderDialog.Create }) {
-                        Icon(Icons.Filled.CreateNewFolder, contentDescription = "New folder")
-                    }
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-            )
+            if (selecting) {
+                TopAppBar(
+                    title = { Text("${selected.size} selected", fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = { selected = emptySet() }) {
+                            Icon(Icons.Filled.Close, contentDescription = "Cancel selection")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { confirmDelete = true }) {
+                            Icon(Icons.Filled.Delete, contentDescription = "Delete selected")
+                        }
+                    },
+                )
+            } else {
+                LargeTopAppBar(
+                    title = { Text("Alarms", fontWeight = FontWeight.Black) },
+                    actions = {
+                        IconButton(onClick = { dialog = FolderDialog.Create }) {
+                            Icon(Icons.Filled.CreateNewFolder, contentDescription = "New folder")
+                        }
+                        IconButton(onClick = onOpenSettings) {
+                            Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                )
+            }
         },
+        bottomBar = bottomBar,
         floatingActionButton = {
-            ExtendedFloatingActionButton(onClick = onNewAlarm) {
-                Icon(Icons.Filled.Add, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("New alarm", fontWeight = FontWeight.Bold)
+            if (!selecting) {
+                ExtendedFloatingActionButton(onClick = onNewAlarm) {
+                    Icon(Icons.Filled.Add, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("New alarm", fontWeight = FontWeight.Bold)
+                }
             }
         },
     ) { padding ->
         if (alarms.isEmpty() && folders.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center,
+            ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         Icons.Filled.Alarm,
@@ -143,6 +216,7 @@ fun HomeScreen(
         }
 
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 16.dp,
@@ -152,14 +226,17 @@ fun HomeScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            for (folder in folders) {
+            for ((folderIndex, folder) in folders.withIndex()) {
                 item(key = "folder-${folder.id}") {
                     FolderHeader(
                         folder = folder,
                         count = byFolder[folder.id].orEmpty().size,
+                        canMoveUp = folderIndex > 0,
+                        canMoveDown = folderIndex < folders.lastIndex,
                         onToggle = { onToggleFolder(folder.id, it) },
                         onRename = { dialog = FolderDialog.Rename(folder) },
                         onDelete = { dialog = FolderDialog.Delete(folder) },
+                        onMove = { onMoveFolder(folder.id, it) },
                     )
                 }
                 val inFolder = byFolder[folder.id].orEmpty()
@@ -174,7 +251,18 @@ fun HomeScreen(
                     }
                 }
                 items(inFolder, key = { it.id }) { alarm ->
-                    AlarmCard(alarm, folderOn = folder.enabled, is24Hour, onToggleAlarm, onOpenAlarm)
+                    AlarmCard(
+                        alarm = alarm,
+                        folderOn = folder.enabled,
+                        is24Hour = is24Hour,
+                        selected = alarm.id in selected,
+                        reorder = reorder,
+                        onToggle = onToggleAlarm,
+                        onTap = {
+                            if (selecting) selected = selected.toggled(alarm.id) else onOpenAlarm(alarm.id)
+                        },
+                        onHold = { selected = selected + alarm.id },
+                    )
                 }
             }
             if (ungrouped.isNotEmpty()) {
@@ -189,10 +277,37 @@ fun HomeScreen(
                     }
                 }
                 items(ungrouped, key = { it.id }) { alarm ->
-                    AlarmCard(alarm, folderOn = true, is24Hour, onToggleAlarm, onOpenAlarm)
+                    AlarmCard(
+                        alarm = alarm,
+                        folderOn = true,
+                        is24Hour = is24Hour,
+                        selected = alarm.id in selected,
+                        reorder = reorder,
+                        onToggle = onToggleAlarm,
+                        onTap = {
+                            if (selecting) selected = selected.toggled(alarm.id) else onOpenAlarm(alarm.id)
+                        },
+                        onHold = { selected = selected + alarm.id },
+                    )
                 }
             }
         }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(if (selected.size == 1) "Delete this alarm?" else "Delete ${selected.size} alarms?") },
+            text = { Text("This cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDeleteAlarms(selected.toList())
+                    selected = emptySet()
+                    confirmDelete = false
+                }) { Text("Delete") }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+        )
     }
 
     when (val current = dialog) {
@@ -234,13 +349,18 @@ fun HomeScreen(
     }
 }
 
+fun <T> Set<T>.toggled(item: T): Set<T> = if (item in this) this - item else this + item
+
 @Composable
 private fun FolderHeader(
     folder: FolderEntity,
     count: Int,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
     onToggle: (Boolean) -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
+    onMove: (Int) -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     Card(
@@ -271,6 +391,18 @@ private fun FolderHeader(
                         menuOpen = false
                         onRename()
                     })
+                    if (canMoveUp) {
+                        DropdownMenuItem(text = { Text("Move up") }, onClick = {
+                            menuOpen = false
+                            onMove(-1)
+                        })
+                    }
+                    if (canMoveDown) {
+                        DropdownMenuItem(text = { Text("Move down") }, onClick = {
+                            menuOpen = false
+                            onMove(1)
+                        })
+                    }
                     DropdownMenuItem(text = { Text("Delete") }, onClick = {
                         menuOpen = false
                         onDelete()
@@ -282,29 +414,46 @@ private fun FolderHeader(
 }
 
 @Composable
-private fun AlarmCard(
+private fun androidx.compose.foundation.lazy.LazyItemScope.AlarmCard(
     alarm: AlarmEntity,
     folderOn: Boolean,
     is24Hour: Boolean,
+    selected: Boolean,
+    reorder: ReorderState,
     onToggle: (Long, Boolean) -> Unit,
-    onOpen: (Long) -> Unit,
+    onTap: () -> Unit,
+    onHold: () -> Unit,
 ) {
     val active = alarm.enabled && folderOn
     val (time, suffix) = formatTime(alarm.hour, alarm.minute, is24Hour)
+    val dragging = reorder.draggedKey == alarm.id
     Card(
-        onClick = { onOpen(alarm.id) },
         modifier = Modifier
             .fillMaxWidth()
+            .then(if (dragging) Modifier else Modifier.animateItem())
+            .reorderable(reorder, alarm.id, onTap = onTap, onHold = onHold)
             .animateContentSize(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)),
         shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
-            containerColor = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = when {
+                selected -> MaterialTheme.colorScheme.tertiaryContainer
+                active -> MaterialTheme.colorScheme.primaryContainer
+                else -> MaterialTheme.colorScheme.surfaceContainerHigh
+            },
         ),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (selected) {
+                Icon(
+                    Icons.Filled.CheckCircle,
+                    contentDescription = "Selected",
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.padding(end = 16.dp),
+                )
+            }
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
@@ -333,12 +482,13 @@ private fun AlarmCard(
 }
 
 @Composable
-private fun NameDialog(
+fun NameDialog(
     title: String,
     initial: String,
     confirmLabel: String,
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
+    fieldLabel: String = "Folder name",
 ) {
     var name by remember { mutableStateOf(initial) }
     AlertDialog(
@@ -349,7 +499,7 @@ private fun NameDialog(
                 value = name,
                 onValueChange = { name = it },
                 singleLine = true,
-                label = { Text("Folder name") },
+                label = { Text(fieldLabel) },
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             )
         },

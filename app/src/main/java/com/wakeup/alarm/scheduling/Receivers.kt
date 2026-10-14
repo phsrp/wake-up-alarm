@@ -7,6 +7,7 @@ import android.util.Log
 import com.wakeup.alarm.AppPrefs
 import com.wakeup.alarm.NO_ALARM
 import com.wakeup.alarm.ring.AlarmService
+import com.wakeup.alarm.ring.TimerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -14,6 +15,23 @@ import kotlinx.coroutines.launch
 /** Receives the exact-time broadcast from AlarmManager and starts the ringing service. */
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == Timers.ACTION_FIRE) {
+            val timerId = intent.getLongExtra(Timers.EXTRA_TIMER_ID, NO_ALARM)
+            if (timerId == NO_ALARM) return
+            TimerService.start(context, timerId)
+            val pending = goAsync()
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    Timers.onFired(context, timerId)
+                } catch (e: Exception) {
+                    Log.e("AlarmReceiver", "Failed to mark the timer finished", e)
+                } finally {
+                    pending.finish()
+                }
+            }
+            return
+        }
+
         val alarmId = intent.getLongExtra(AlarmScheduler.EXTRA_ALARM_ID, NO_ALARM)
         if (alarmId == NO_ALARM) return
 
@@ -50,8 +68,9 @@ class RescheduleReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 AlarmScheduler.rescheduleAll(context)
+                Timers.rescheduleAll(context)
             } catch (e: Exception) {
-                Log.e("RescheduleReceiver", "Failed to reschedule alarms", e)
+                Log.e("RescheduleReceiver", "Failed to reschedule alarms and timers", e)
             } finally {
                 pending.finish()
             }

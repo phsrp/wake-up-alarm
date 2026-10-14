@@ -38,6 +38,28 @@
                 <action android:name="android.intent.action.SHOW_ALARMS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SHOW_TIMERS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <!-- Not a documented Android action; accepted in case an assistant sends it. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SHOW_STOPWATCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Lets Google Assistant / Gemini start timers here ("set a 5 minute timer"). -->
+        <activity
+            android:name=".ui.SetTimerActivity"
+            android:directBootAware="true"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.SET_TIMER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <!-- Lets Google Assistant / Gemini create alarms here. Dismiss and snooze are intentionally not handled. -->

@@ -49,4 +49,28 @@ class AppPrefs(context: Context) {
     var ringingLabel: String
         get() = prefs.getString("ringing_label", "") ?: ""
         set(value) = prefs.edit().putString("ringing_label", value).apply()
+
+    // ----- stopwatch (kept here so it keeps counting when the app is closed) -----
+
+    var stopwatchRunning: Boolean
+        get() = prefs.getBoolean("sw_running", false)
+        set(value) = prefs.edit().putBoolean("sw_running", value).apply()
+
+    /** Wall-clock moment the stopwatch was last started. */
+    var stopwatchStartedAt: Long
+        get() = prefs.getLong("sw_started_at", 0L)
+        set(value) = prefs.edit().putLong("sw_started_at", value).apply()
+
+    /** Time counted before the last start (the stopwatch was paused). */
+    var stopwatchAccumulated: Long
+        get() = prefs.getLong("sw_accumulated", 0L)
+        set(value) = prefs.edit().putLong("sw_accumulated", value).apply()
+
+    /** Total elapsed time at each lap, in milliseconds, oldest first. */
+    var stopwatchLaps: List<Long>
+        get() = (prefs.getString("sw_laps", "") ?: "").split(',').mapNotNull { it.toLongOrNull() }
+        set(value) = prefs.edit().putString("sw_laps", value.joinToString(",")).apply()
+
+    fun stopwatchElapsed(now: Long = System.currentTimeMillis()): Long =
+        stopwatchAccumulated + if (stopwatchRunning) (now - stopwatchStartedAt).coerceAtLeast(0) else 0L
 }

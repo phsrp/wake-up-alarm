@@ -1,16 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Drawn on Android's 108dp adaptive-icon canvas. Everything sits inside the central 66dp
+    "safe zone" and is centred on (54, 54), so no launcher mask can cut it off or push it sideways.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group
-        android:scaleX="1.9"
-        android:scaleY="1.9"
-        android:pivotX="54"
-        android:pivotY="54">
-        <path
-            android:fillColor="#FFFFFFFF"
-            android:pathData="M54,36c-9.4,0 -17,7.6 -17,17s7.6,17 17,17 17,-7.6 17,-17 -7.6,-17 -17,-17zM56,54.5l-5,-3L51,43h3v7.4l3.5,2.1z" />
-    </group>
+
+    <!-- Clock face: a full circle, 60dp across, exactly in the middle. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,24 A30,30 0 1,1 54,84 A30,30 0 1,1 54,24 Z" />
+
+    <!-- Hour hand (points to about 10) and minute hand (points to 2): thick, with round ends. -->
+    <path
+        android:pathData="M54,54 L42,43"
+        android:strokeColor="#FF3F51B5"
+        android:strokeLineCap="round"
+        android:strokeWidth="7" />
+    <path
+        android:pathData="M54,54 L54,33"
+        android:strokeColor="#FF3F51B5"
+        android:strokeLineCap="round"
+        android:strokeWidth="6" />
+
+    <!-- Centre pin. -->
+    <path
+        android:fillColor="#FF3F51B5"
+        android:pathData="M54,48 A6,6 0 1,1 54,60 A6,6 0 1,1 54,48 Z" />
 </vector>

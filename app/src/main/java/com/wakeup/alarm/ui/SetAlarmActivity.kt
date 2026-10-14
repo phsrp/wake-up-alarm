@@ -54,7 +54,11 @@ class SetAlarmActivity : Activity() {
         Toast.makeText(this, "Alarm set for $time $suffix".trim(), Toast.LENGTH_LONG).show()
 
         if (!request.getBooleanExtra(AlarmClock.EXTRA_SKIP_UI, false)) {
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .setAction(AlarmClock.ACTION_SHOW_ALARMS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            )
         }
     }
 
