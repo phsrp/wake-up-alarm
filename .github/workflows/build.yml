@@ -2,7 +2,11 @@ name: Build debug APK
 
 on:
   push:
+    branches: ["**"]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -31,3 +35,16 @@ jobs:
           name: wakeup-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      # Keeps one always-current download on the Releases page.
+      - name: Publish to Releases
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk Wake-Up.apk
+          gh release delete latest --cleanup-tag --yes || true
+          gh release create latest Wake-Up.apk \
+            --title "Wake Up (latest build)" \
+            --notes "Built from commit ${GITHUB_SHA::7}. Download **Wake-Up.apk**, open it on your phone and tap Install. New builds install over old ones and keep your alarms." \
+            --latest

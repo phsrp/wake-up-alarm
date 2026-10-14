@@ -6,7 +6,7 @@ An Android alarm app for people who sleep through their alarms.
 It rings until you solve math problems, and there is no snooze.  
 **Every line of it was written by AI.**
 
-![Made with AI](https://img.shields.io/badge/made%20with-AI-ebbcba?style=for-the-badge) ![Android](https://img.shields.io/badge/platform-Android-31748f?style=for-the-badge) ![Vibe coded](https://img.shields.io/badge/vibe-coded-c4a7e7?style=for-the-badge)
+[![Download](https://img.shields.io/badge/download-latest%20APK-c4a7e7?style=for-the-badge)](https://github.com/phsrp/wake-up-alarm/releases/latest) ![Made with AI](https://img.shields.io/badge/made%20with-AI-ebbcba?style=for-the-badge) ![Android](https://img.shields.io/badge/platform-Android-31748f?style=for-the-badge) ![Vibe coded](https://img.shields.io/badge/vibe-coded-c4a7e7?style=for-the-badge)
 
 </div>
 
@@ -39,12 +39,12 @@ Add screenshots to docs/screenshots/ and uncomment this block:
 
 ## How to install
 
-1. Open the **Actions** tab of this repository and click the latest run with a green tick.
-2. At the bottom, under **Artifacts**, click `wakeup-debug-apk`. It downloads as a zip.
-3. Unzip it and open the `.apk` file on your phone. If Android asks, allow your browser or file manager to **install unknown apps**.
+1. On your phone, open the [latest release](https://github.com/phsrp/wake-up-alarm/releases/latest) (the purple **download** button at the top of this page does the same).
+2. Under **Assets**, tap `Wake-Up.apk`.
+3. Open the downloaded file. If Android asks, allow your browser or file manager to **install unknown apps**, then tap **Install**. Play Protect may warn that the app is unknown; choose **Install anyway**.
 4. Open Wake Up and follow the setup guide.
 
-To update, download the newest build the same way and install it over the old one. Your alarms are kept.
+To update, download `Wake-Up.apk` again and install it over the old one. Your alarms are kept. The release is replaced with the newest build every time the code changes.
 
 > **Never use Force stop** on the app in Android settings. It cancels every alarm until you open the app again.
 
