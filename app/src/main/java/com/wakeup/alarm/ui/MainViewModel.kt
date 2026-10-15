@@ -59,6 +59,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun reorderAlarms(idsInOrder: List<Long>) = change { dao.applyAlarmOrder(idsInOrder) }
 
+    /** Moves an alarm into a folder, or out of any folder when [folderId] is null. */
+    fun moveAlarm(id: Long, folderId: Long?) = change { dao.moveAlarm(id, folderId) }
+
     fun createFolder(name: String) = change { dao.insertFolder(FolderEntity(name = name.trim())) }
 
     fun renameFolder(id: Long, name: String) = change { dao.renameFolder(id, name.trim()) }
