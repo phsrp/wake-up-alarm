@@ -39,7 +39,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.clip
 import com.wakeup.alarm.AppPrefs
+import com.wakeup.alarm.AppTheme
 import com.wakeup.alarm.Difficulty
 import com.wakeup.alarm.scheduling.AlarmScheduler
 
@@ -68,6 +76,46 @@ fun SettingsScreen(prefs: AppPrefs, onOpenSetup: () -> Unit, onBack: () -> Unit)
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Theme", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                val currentTheme = ThemeController.current(context)
+                AppTheme.entries.forEach { option ->
+                    val selected = option == currentTheme
+                    Surface(
+                        onClick = { ThemeController.set(context, option) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.extraLarge,
+                        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
+                                option.swatch().forEach { color ->
+                                    Box(
+                                        Modifier
+                                            .size(26.dp)
+                                            .clip(CircleShape)
+                                            .background(color)
+                                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
+                                    )
+                                }
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text(option.label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(option.description, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            if (selected) {
+                                Icon(Icons.Filled.CheckCircle, contentDescription = "Selected")
+                            }
+                        }
+                    }
+                }
+            }
+
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Math difficulty", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {

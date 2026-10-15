@@ -20,6 +20,14 @@ enum class Difficulty(val label: String) {
     HARD("Hard"),
 }
 
+enum class AppTheme(val label: String, val description: String) {
+    EXPRESSIVE("Material 3 Expressive", "Bold shapes and colours that follow your wallpaper (Material You)"),
+    GRUVBOX_DARK("Gruvbox Dark", "Warm, retro, dark"),
+    GRUVBOX_LIGHT("Gruvbox Light", "Warm, retro, light"),
+    ROSE_PINE("Rosé Pine", "Soft and moody, dark"),
+    ROSE_PINE_DAWN("Rosé Pine Dawn", "Soft and warm, light"),
+}
+
 const val NO_ALARM = Long.MIN_VALUE
 const val TEST_ALARM_ID = -1L
 
@@ -31,6 +39,11 @@ class AppPrefs(context: Context) {
         get() = runCatching { Difficulty.valueOf(prefs.getString("difficulty", null) ?: "") }
             .getOrDefault(Difficulty.MEDIUM)
         set(value) = prefs.edit().putString("difficulty", value.name).apply()
+
+    var appTheme: AppTheme
+        get() = runCatching { AppTheme.valueOf(prefs.getString("app_theme", null) ?: "") }
+            .getOrDefault(AppTheme.EXPRESSIVE)
+        set(value) = prefs.edit().putString("app_theme", value.name).apply()
 
     /** How many problems in a row must be solved to stop an alarm. */
     var problemCount: Int

@@ -172,6 +172,7 @@ private fun WakeUpRoot(viewModel: MainViewModel, requestedTab: MutableState<Stri
                 },
                 onDeleteAlarms = viewModel::deleteAlarms,
                 onReorderAlarms = viewModel::reorderAlarms,
+                onMoveAlarm = viewModel::moveAlarm,
                 onToggleFolder = viewModel::setFolderEnabled,
                 onCreateFolder = viewModel::createFolder,
                 onRenameFolder = viewModel::renameFolder,

@@ -23,6 +23,9 @@ This app was designed, written and built by Claude (Anthropic) from plain-Englis
 - **Survives restarts:** alarms are set again after a reboot, an app update, or a time or timezone change.
 - **Timers and a stopwatch** with laps. Timers keep running when the app is closed and ring when they run out.
 - **Live Updates:** running timers and the stopwatch show a live clock in the notification, and in OnePlus's Live Alerts capsule once you turn it on for the app.
+- **Folders as tiles:** folders sit in a row at the top (three at a time, scroll for more). Tap the folder icon to switch a whole folder on or off, tap the tile to open it, and drag an alarm onto a tile to move it in.
+- **Next alarm countdown** on the alarms screen.
+- **Themes:** Material 3 Expressive (colours from your wallpaper), Gruvbox Dark and Light, and Rosé Pine and Rosé Pine Dawn.
 - **Hold to reorder and delete:** press and hold an alarm or timer, then drag it to move it, or let go to select it and delete.
 - **Google can set alarms and timers:** Wake Up answers Android's standard "set an alarm" and "set a timer" requests. Voice commands can only create alarms, never dismiss them.
 - **Setup guide** on first launch for permissions and the battery settings OnePlus phones need, and a **Test alarm in 10 seconds** button.

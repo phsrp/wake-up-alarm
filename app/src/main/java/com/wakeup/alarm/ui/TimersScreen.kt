@@ -134,7 +134,7 @@ fun TimersScreen(
                 localOrder = order
             }
         },
-        onFinished = { localOrder?.let(onReorder) },
+        onFinished = { _, _ -> localOrder?.let(onReorder) },
     )
 
     BackHandler(enabled = selecting) { selected = emptySet() }
@@ -209,6 +209,7 @@ fun TimersScreen(
         ) {
             items(shown, key = { it.id }) { timer ->
                 TimerCard(
+                    index = shown.indexOf(timer),
                     timer = timer,
                     now = now,
                     selected = timer.id in selected,
@@ -252,6 +253,7 @@ fun TimersScreen(
 
 @Composable
 private fun LazyItemScope.TimerCard(
+    index: Int,
     timer: TimerEntity,
     now: Long,
     selected: Boolean,
@@ -269,6 +271,7 @@ private fun LazyItemScope.TimerCard(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (dragging) Modifier else Modifier.animateItem())
+            .enterAnimation(index)
             .reorderable(reorder, timer.id, onTap = onTap, onHold = onHold)
             .animateContentSize(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)),
         shape = MaterialTheme.shapes.extraLarge,

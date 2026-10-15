@@ -10,6 +10,7 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.IconCompat
 import com.wakeup.alarm.AppPrefs
 import com.wakeup.alarm.R
 import com.wakeup.alarm.data.AppDatabase
@@ -121,7 +122,14 @@ object LiveUpdates {
             .setContentTitle(time)
             .setContentText(timer.label.ifBlank { "Timer" })
             .setShortCriticalText(time)
-            .setProgress(total, (total - left.toInt()).coerceIn(0, total), false)
+            // Android 16's progress template: this is what the system draws as the designed Live Update card.
+            .setStyle(
+                NotificationCompat.ProgressStyle()
+                    .setProgressSegments(listOf(NotificationCompat.ProgressStyle.Segment(total.coerceAtLeast(1))))
+                    .setProgress((total - left.toInt()).coerceIn(0, total.coerceAtLeast(1)))
+                    .setStyledByProgress(true)
+                    .setProgressTrackerIcon(IconCompat.createWithResource(context, R.drawable.ic_alarm)),
+            )
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
