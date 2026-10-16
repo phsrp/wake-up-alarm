@@ -108,6 +108,13 @@
                 android:value="Live countdown for running timers and the stopwatch" />
         </service>
 
+        <!-- Rings when a timer runs out. -->
+        <service
+            android:name=".ring.TimerService"
+            android:directBootAware="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
         <service
             android:name=".ring.AlarmService"
             android:directBootAware="true"
