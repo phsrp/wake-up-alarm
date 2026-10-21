@@ -19,7 +19,8 @@ This app was designed, written and built by Claude (Anthropic) from plain-Englis
 - **Alarms** with a time, repeat days, a label and a sound picked from your phone's ringtones and audio.
 - **Folders** to group alarms (for example "School" or "Project work"), with one switch to turn a whole folder on or off.
 - **Hard to ignore:** it rings on the alarm volume at maximum, vibrates, turns the screen on and shows over the lock screen. It rings until you stop it, or for a set time if you choose that.
-- **No snooze:** the only way to stop it is to solve math problems in a row. A wrong answer starts the count again. Difficulty is easy, medium or hard.
+- **No snooze:** the only way to stop it is to solve math problems in a row. A wrong answer starts the count again. Difficulty is easy, medium or hard, and every level is meant to be doable in your head while half asleep. After nine wrong answers a calculator unlocks. You can also switch the math off in Settings, and then you stop the alarm by holding a button.
+- **Default alarm sound** you can pick in Settings, used by alarms and timers without a sound of their own.
 - **Survives restarts:** alarms are set again after a reboot, an app update, or a time or timezone change.
 - **Timers and a stopwatch** with laps. Timers keep running when the app is closed and ring when they run out.
 - **Live Updates:** running timers and the stopwatch show a live clock in the notification, and in OnePlus's Live Alerts capsule once you turn it on for the app.

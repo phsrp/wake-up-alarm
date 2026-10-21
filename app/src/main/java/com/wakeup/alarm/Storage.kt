@@ -45,6 +45,21 @@ class AppPrefs(context: Context) {
             .getOrDefault(AppTheme.EXPRESSIVE)
         set(value) = prefs.edit().putString("app_theme", value.name).apply()
 
+    /** When off, an alarm is stopped by holding a button instead of solving math problems. */
+    var mathRequired: Boolean
+        get() = prefs.getBoolean("math_required", true)
+        set(value) = prefs.edit().putBoolean("math_required", value).apply()
+
+    /** Sound used by alarms and timers that have no sound of their own. Null means the phone's default. */
+    var defaultSoundUri: String?
+        get() = prefs.getString("default_sound_uri", null)
+        set(value) = prefs.edit().putString("default_sound_uri", value).apply()
+
+    /** Wrong answers during the alarm that is ringing now. Nine unlock the calculator. */
+    var ringFailures: Int
+        get() = prefs.getInt("ring_failures", 0)
+        set(value) = prefs.edit().putInt("ring_failures", value).apply()
+
     /** How many problems in a row must be solved to stop an alarm. */
     var problemCount: Int
         get() = prefs.getInt("problem_count", 3)

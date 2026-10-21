@@ -22,6 +22,7 @@ import android.provider.AlarmClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.wakeup.alarm.AppPrefs
 import com.wakeup.alarm.R
 import com.wakeup.alarm.ui.MainActivity
 
@@ -67,6 +68,7 @@ class TimerService : Service() {
 
     private fun startSound() {
         val uris = listOfNotNull(
+            AppPrefs(this).defaultSoundUri?.let { android.net.Uri.parse(it) },
             RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM),
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),

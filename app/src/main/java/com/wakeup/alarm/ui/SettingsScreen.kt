@@ -46,6 +46,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.clip
+import android.app.Activity
+import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material3.Switch
+import androidx.core.content.IntentCompat
 import com.wakeup.alarm.AppPrefs
 import com.wakeup.alarm.AppTheme
 import com.wakeup.alarm.Difficulty
@@ -56,6 +65,20 @@ fun SettingsScreen(prefs: AppPrefs, onOpenSetup: () -> Unit, onBack: () -> Unit)
     val context = LocalContext.current
     var difficulty by remember { mutableStateOf(prefs.difficulty) }
     var count by remember { mutableIntStateOf(prefs.problemCount) }
+    var mathRequired by remember { mutableStateOf(prefs.mathRequired) }
+    var defaultSound by remember { mutableStateOf(prefs.defaultSoundUri) }
+
+    val soundPicker = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val picked = result.data?.let {
+                IntentCompat.getParcelableExtra(it, RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+            }
+            val systemDefault = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            // Choosing the phone's own default simply clears the setting.
+            defaultSound = if (picked == null || picked == systemDefault) null else picked.toString()
+            prefs.defaultSoundUri = defaultSound
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -117,10 +140,84 @@ fun SettingsScreen(prefs: AppPrefs, onOpenSetup: () -> Unit, onBack: () -> Unit)
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Default alarm sound", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    "Used by every alarm and timer that has no sound of its own.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Surface(
+                    onClick = {
+                        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Default alarm sound")
+                            defaultSound?.let { putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(it)) }
+                        }
+                        soundPicker.launch(intent)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Icons.Filled.MusicNote, contentDescription = null)
+                        Column(Modifier.padding(start = 16.dp)) {
+                            Text(
+                                if (defaultSound == null) "Phone's default alarm sound" else soundTitle(context, defaultSound),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Text("Tap to choose from your ringtones and audio", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Solve math to stop an alarm", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            if (mathRequired) "On: you must solve the problems below." else "Off: you stop an alarm by holding the Stop button for 2 seconds.",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    Switch(
+                        checked = mathRequired,
+                        onCheckedChange = {
+                            mathRequired = it
+                            prefs.mathRequired = it
+                        },
+                    )
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Math difficulty", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    when (difficulty) {
+                        Difficulty.EASY -> "Single digits and small numbers, like 7 + 5 or 15 − 6."
+                        Difficulty.MEDIUM -> "Two-digit adding and taking away, like 47 + 28."
+                        Difficulty.HARD -> "Times tables and three-digit sums, like 17 × 8 or 342 + 257."
+                    } + " If you get nine wrong in one ringing, a calculator unlocks.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     Difficulty.entries.forEachIndexed { index, option ->
                         SegmentedButton(
+                            enabled = mathRequired,
                             selected = difficulty == option,
                             onClick = {
                                 difficulty = option

@@ -132,6 +132,8 @@ class AlarmService : Service() {
     private fun beginRinging(alarmId: Long) {
         ringing = true
         currentId = alarmId
+        // A fresh ringing starts with a clean count of wrong answers; a restart of the same ringing keeps it.
+        if (prefs.ringingAlarmId != alarmId) prefs.ringFailures = 0
         prefs.ringingAlarmId = alarmId
 
         val powerManager = getSystemService(PowerManager::class.java)
@@ -170,6 +172,7 @@ class AlarmService : Service() {
     private fun startSound(soundUri: String?) {
         val candidates = listOfNotNull(
             soundUri?.let { Uri.parse(it) },
+            prefs.defaultSoundUri?.let { Uri.parse(it) },
             RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM),
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
@@ -258,6 +261,7 @@ class AlarmService : Service() {
         currentId = NO_ALARM
         prefs.ringingAlarmId = NO_ALARM
         prefs.ringingLabel = ""
+        prefs.ringFailures = 0
         releaseResources()
         stopForeground(STOP_FOREGROUND_REMOVE)
         getSystemService(NotificationManager::class.java).cancel(AlarmNotifications.NOTIFICATION_ID)

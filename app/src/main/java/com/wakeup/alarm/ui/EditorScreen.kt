@@ -54,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentCompat
+import com.wakeup.alarm.AppPrefs
 import com.wakeup.alarm.data.AlarmEntity
 import com.wakeup.alarm.data.FolderEntity
 import com.wakeup.alarm.scheduling.AlarmScheduler
@@ -61,11 +62,15 @@ import com.wakeup.alarm.scheduling.AlarmScheduler
 private val DAY_LETTERS = listOf("M", "T", "W", "T", "F", "S", "S")
 private val DURATIONS = listOf(0 to "Until dismissed", 1 to "1 min", 5 to "5 min", 10 to "10 min", 30 to "30 min")
 
-private fun soundTitle(context: Context, uriString: String?): String {
-    if (uriString == null) return "Default alarm sound"
-    return runCatching {
-        RingtoneManager.getRingtone(context, Uri.parse(uriString))?.getTitle(context)
+/** The name of a sound for display. Null means "the default", which may be one chosen in Settings. */
+fun soundTitle(context: Context, uriString: String?): String {
+    fun titleOf(uri: String): String = runCatching {
+        RingtoneManager.getRingtone(context, Uri.parse(uri))?.getTitle(context)
     }.getOrNull() ?: "Custom sound"
+
+    if (uriString != null) return titleOf(uriString)
+    val appDefault = AppPrefs(context).defaultSoundUri
+    return if (appDefault == null) "Default alarm sound" else "Default: ${titleOf(appDefault)}"
 }
 
 @Composable
