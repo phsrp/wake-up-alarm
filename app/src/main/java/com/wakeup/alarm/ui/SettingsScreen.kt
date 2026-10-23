@@ -67,18 +67,7 @@ fun SettingsScreen(prefs: AppPrefs, onOpenSetup: () -> Unit, onBack: () -> Unit)
     var count by remember { mutableIntStateOf(prefs.problemCount) }
     var mathRequired by remember { mutableStateOf(prefs.mathRequired) }
     var defaultSound by remember { mutableStateOf(prefs.defaultSoundUri) }
-
-    val soundPicker = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val picked = result.data?.let {
-                IntentCompat.getParcelableExtra(it, RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
-            }
-            val systemDefault = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            // Choosing the phone's own default simply clears the setting.
-            defaultSound = if (picked == null || picked == systemDefault) null else picked.toString()
-            prefs.defaultSoundUri = defaultSound
-        }
-    }
+    var timerSound by remember { mutableStateOf(prefs.timerSoundUri) }
 
     Scaffold(
         topBar = {
@@ -139,42 +128,24 @@ fun SettingsScreen(prefs: AppPrefs, onOpenSetup: () -> Unit, onBack: () -> Unit)
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Default alarm sound", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(
-                    "Used by every alarm and timer that has no sound of its own.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Surface(
-                    onClick = {
-                        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-                            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
-                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
-                            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Default alarm sound")
-                            defaultSound?.let { putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(it)) }
-                        }
-                        soundPicker.launch(intent)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.extraLarge,
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(Icons.Filled.MusicNote, contentDescription = null)
-                        Column(Modifier.padding(start = 16.dp)) {
-                            Text(
-                                if (defaultSound == null) "Phone's default alarm sound" else soundTitle(context, defaultSound),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Text("Tap to choose from your ringtones and audio", style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
-                }
+            SoundSetting(
+                title = "Default alarm sound",
+                subtitle = "Used by every alarm that has no sound of its own.",
+                current = defaultSound,
+                emptyLabel = "Phone's default alarm sound",
+            ) {
+                defaultSound = it
+                prefs.defaultSoundUri = it
+            }
+
+            SoundSetting(
+                title = "Timer sound",
+                subtitle = "Played when a timer runs out. If you don't choose one, the default alarm sound is used.",
+                current = timerSound,
+                emptyLabel = "Same as the default alarm sound",
+            ) {
+                timerSound = it
+                prefs.timerSoundUri = it
             }
 
             Surface(
@@ -287,6 +258,66 @@ fun SettingsScreen(prefs: AppPrefs, onOpenSetup: () -> Unit, onBack: () -> Unit)
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+    }
+}
+
+/** A titled row that opens the phone's ringtone picker. A null choice means "use the fallback". */
+@Composable
+private fun SoundSetting(
+    title: String,
+    subtitle: String,
+    current: String?,
+    emptyLabel: String,
+    onPicked: (String?) -> Unit,
+) {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val picked = result.data?.let {
+                IntentCompat.getParcelableExtra(it, RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+            }
+            val systemDefault = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            // Choosing the phone's own default simply clears the setting.
+            onPicked(if (picked == null || picked == systemDefault) null else picked.toString())
+        }
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(
+            subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Surface(
+            onClick = {
+                val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, title)
+                    current?.let { putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(it)) }
+                }
+                launcher.launch(intent)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Filled.MusicNote, contentDescription = null)
+                Column(Modifier.padding(start = 16.dp)) {
+                    Text(
+                        if (current == null) emptyLabel else soundTitle(context, current),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text("Tap to choose from your ringtones and audio", style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
     }

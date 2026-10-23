@@ -67,8 +67,10 @@ class TimerService : Service() {
     }
 
     private fun startSound() {
+        val prefs = AppPrefs(this)
         val uris = listOfNotNull(
-            AppPrefs(this).defaultSoundUri?.let { android.net.Uri.parse(it) },
+            prefs.timerSoundUri?.let { android.net.Uri.parse(it) },
+            prefs.defaultSoundUri?.let { android.net.Uri.parse(it) },
             RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM),
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),

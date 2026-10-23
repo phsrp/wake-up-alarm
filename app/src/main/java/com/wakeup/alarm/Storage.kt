@@ -55,6 +55,11 @@ class AppPrefs(context: Context) {
         get() = prefs.getString("default_sound_uri", null)
         set(value) = prefs.edit().putString("default_sound_uri", value).apply()
 
+    /** Sound played when a timer runs out. Null falls back to [defaultSoundUri], then the phone's default. */
+    var timerSoundUri: String?
+        get() = prefs.getString("timer_sound_uri", null)
+        set(value) = prefs.edit().putString("timer_sound_uri", value).apply()
+
     /** Wrong answers during the alarm that is ringing now. Nine unlock the calculator. */
     var ringFailures: Int
         get() = prefs.getInt("ring_failures", 0)
