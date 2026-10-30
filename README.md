@@ -33,17 +33,13 @@ This app was designed, written and built by Claude (Anthropic) from plain-Englis
 
 ## Previews
 
-<!--
-Add screenshots to docs/screenshots/ and uncomment this block:
-
 <div align="center">
 
-<img src="docs/screenshots/alarms.png" alt="The alarm list with folders" width="30%"> <img src="docs/screenshots/ringing.png" alt="The ringing screen with a math problem" width="30%"> <img src="docs/screenshots/setup.png" alt="The setup guide" width="30%">
+<img src="docs/screenshots/alarms.png" alt="The alarms tab, with folders in a row and the next alarm countdown" width="24%"> <img src="docs/screenshots/timer.png" alt="The timer tab with a timer running" width="24%"> <img src="docs/screenshots/stopwatch.png" alt="The stopwatch tab with laps" width="24%"> <img src="docs/screenshots/ringing.png" alt="The ringing screen, asking for math answers to stop the alarm" width="24%">
+
+*Alarms, Timer, Stopwatch, and the ringing screen.*
 
 </div>
--->
-
-*Screenshots coming soon.*
 
 ## How to install
 
