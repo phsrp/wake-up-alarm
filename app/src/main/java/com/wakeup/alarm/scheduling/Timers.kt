@@ -69,6 +69,7 @@ object Timers {
         dao(context).updateTimer(timer.copy(state = TimerEntity.STATE_RUNNING, endAtMillis = endAt, remainingMillis = left))
         scheduleAt(context, id, endAt)
         LiveUpdates.sync(context)
+        silenceIfNothingFinished(context)
     }
 
     suspend fun pause(context: Context, id: Long) {
@@ -107,6 +108,7 @@ object Timers {
             timer.copy(state = TimerEntity.STATE_IDLE, endAtMillis = 0, remainingMillis = timer.durationSeconds * 1000L),
         )
         LiveUpdates.sync(context)
+        silenceIfNothingFinished(context)
     }
 
     suspend fun delete(context: Context, ids: List<Long>) {
@@ -116,6 +118,17 @@ object Timers {
         }
         dao(context).deleteTimers(ids)
         LiveUpdates.sync(context)
+        silenceIfNothingFinished(context)
+    }
+
+    /**
+     * A timer that ran out rings until it is stopped. Resetting, restarting or deleting it in the app
+     * must stop that ringing too, not just the Stop button on the notification. If another timer is
+     * still finished and waiting, the ringing carries on for that one.
+     */
+    private suspend fun silenceIfNothingFinished(context: Context) {
+        val anyFinished = dao(context).getTimers().any { it.state == TimerEntity.STATE_FINISHED }
+        if (!anyFinished) context.stopService(Intent(context, TimerService::class.java))
     }
 
     /** The time ran out: remember that, then ring. */
